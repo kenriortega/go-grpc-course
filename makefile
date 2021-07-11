@@ -1,7 +1,7 @@
 generate:
 	./generate.sh
 
-server:
+greetserver:
 	go run handOne/greet/greet_server/server.go
-client:
+greetclient:
 	go run handOne/greet/greet_client/client.go

@@ -65,6 +65,31 @@ func (*server) ComputeAverage(stream calculatorpb.CalculatorService_ComputeAvera
 		count++
 	}
 }
+
+func (*server) FindMaximun(stream calculatorpb.CalculatorService_FindMaximunServer) error {
+	maximun := int32(0)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatal(err)
+			return err
+		}
+		num := req.GetNumber()
+		if num > maximun {
+			maximun = num
+			err := stream.Send(&calculatorpb.FindMaximunResponse{
+				Maximun: maximun,
+			})
+			if err != nil {
+				log.Fatal(err)
+				return err
+			}
+		}
+	}
+}
 func main() {
 	fmt.Println("Calculator Server")
 

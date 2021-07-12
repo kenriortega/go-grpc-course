@@ -7,6 +7,7 @@ service CalculatorService {
     rpc Sum (SumRequest) returns (SumResponse){};
     rpc PrimeNumberDecomposition (PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse);
     rpc ComputeAverage (stream ComputeAverageRequest) returns (ComputeAverageResponse);
+    rpc FindMaximun (stream FindMaximunRequest) returns (stream FindMaximunResponse);
 }
 
 message SumRequest {
@@ -30,4 +31,10 @@ message ComputeAverageRequest {
 }
 message ComputeAverageResponse {
     double average=1;
+}
+message FindMaximunRequest {
+    int32 number=1;
+}
+message FindMaximunResponse {
+    int32 maximun=1;
 }

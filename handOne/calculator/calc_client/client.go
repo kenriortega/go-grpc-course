@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/kenriortega/go-grpc-course/handOne/calculator/calculatorpb"
 	"google.golang.org/grpc"
@@ -24,7 +25,8 @@ func main() {
 
 	// doUnary(c)
 	// doStreaming(c)
-	doClientStreaming(c)
+	// doClientStreaming(c)
+	doBiDiStreaming(c)
 }
 
 func doUnary(c calculatorpb.CalculatorServiceClient) {
@@ -80,4 +82,41 @@ func doClientStreaming(c calculatorpb.CalculatorServiceClient) {
 		log.Fatalf("err: %v", err)
 	}
 	fmt.Println("Result ", res.GetAverage())
+}
+
+func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
+
+	stream, err := c.FindMaximun(context.Background())
+	if err != nil {
+		log.Fatalf("err %v", err)
+	}
+
+	waitc := make(chan struct{})
+	go func() {
+		numbers := []int32{3, 4, 55, 67, 8, 23}
+		for _, v := range numbers {
+			stream.Send(&calculatorpb.FindMaximunRequest{
+				Number: v,
+			})
+			time.Sleep(1000 * time.Millisecond)
+		}
+		stream.CloseSend()
+	}()
+
+	go func() {
+		for {
+			res, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.Fatalf("err: %v", err)
+				break
+			}
+			maximun := res.GetMaximun()
+			fmt.Println(maximun)
+		}
+		close(waitc)
+	}()
+	<-waitc
 }

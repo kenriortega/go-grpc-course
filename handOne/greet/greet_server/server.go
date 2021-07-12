@@ -60,6 +60,30 @@ func (*server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
 	}
 }
 
+func (*server) GreetEveryone(stream greetpb.GreetService_GreetEveryoneServer) error {
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("err %v", err)
+			return err
+		}
+
+		result := "hello " + req.Greeting.GetFirstName() + "!"
+
+		err = stream.Send(&greetpb.GreetEveryoneResponse{
+			Result: result,
+		})
+		if err != nil {
+			log.Fatalf("err %v", err)
+			return err
+		}
+
+	}
+}
+
 func main() {
 	fmt.Println("Hello grpc server")
 

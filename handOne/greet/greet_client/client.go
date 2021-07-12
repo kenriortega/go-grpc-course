@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/kenriortega/go-grpc-course/handOne/greet/greetpb"
@@ -20,7 +21,7 @@ func main() {
 
 	c := greetpb.NewGreetServiceClient(cc)
 	doUnary(c)
-
+	doServerStreaming(c)
 }
 
 func doUnary(c greetpb.GreetServiceClient) {
@@ -37,4 +38,27 @@ func doUnary(c greetpb.GreetServiceClient) {
 		log.Fatalf("Error: %v", err)
 	}
 	fmt.Println(res)
+}
+
+func doServerStreaming(c greetpb.GreetServiceClient) {
+	req := &greetpb.GreetManyTimesRequest{
+		Greeting: &greetpb.Greeting{
+			FirstName: "kali",
+			LastName:  "ort",
+		},
+	}
+	resStream, err := c.GreetManyTimes(context.Background(), req)
+	if err != nil {
+		log.Fatalf("error %v", err)
+	}
+	for {
+		msg, err := resStream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("err %v", err)
+		}
+		log.Printf("Response for greetmanytimes: %v", msg.GetResult())
+	}
 }

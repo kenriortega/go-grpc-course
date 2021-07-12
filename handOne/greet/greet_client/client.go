@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"time"
 
 	"github.com/kenriortega/go-grpc-course/handOne/greet/greetpb"
 	"google.golang.org/grpc"
@@ -22,6 +23,7 @@ func main() {
 	c := greetpb.NewGreetServiceClient(cc)
 	doUnary(c)
 	doServerStreaming(c)
+	doClientStreaming(c)
 }
 
 func doUnary(c greetpb.GreetServiceClient) {
@@ -61,4 +63,52 @@ func doServerStreaming(c greetpb.GreetServiceClient) {
 		}
 		log.Printf("Response for greetmanytimes: %v", msg.GetResult())
 	}
+}
+
+func doClientStreaming(c greetpb.GreetServiceClient) {
+
+	requests := []*greetpb.LongGreetRequest{
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ka",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ke",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ki",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ko",
+			},
+		},
+		{
+			Greeting: &greetpb.Greeting{
+				FirstName: "ku",
+			},
+		},
+	}
+
+	stream, err := c.LongGreet(context.Background())
+	if err != nil {
+		log.Fatalf("err %v", err)
+	}
+
+	for _, req := range requests {
+
+		stream.Send(req)
+		time.Sleep(100 * time.Millisecond)
+	}
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("err %v", err)
+	}
+
+	fmt.Printf("response %v", res)
 }

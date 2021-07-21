@@ -7,6 +7,7 @@ option go_package="greetpb";
 service GreetService{
     //Unary
     rpc Greet (GreetRequest) returns (GreetResponse);
+    rpc GreetWithDeadline (GreetWithDeadlineRequest) returns (GreetWithDeadlineResponse);
     // Server Streaming
     rpc GreetManyTimes (GreetManyTimesRequest) returns (stream GreeManyTimesResponse);
     // Client Streaming
@@ -47,5 +48,13 @@ message GreetEveryoneRequest {
 }
 
 message GreetEveryoneResponse {
+    string result = 1;
+}
+
+message GreetWithDeadlineRequest {
+    Greeting greeting =1;
+}
+
+message GreetWithDeadlineResponse {
     string result = 1;
 }

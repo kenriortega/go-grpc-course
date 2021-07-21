@@ -12,6 +12,7 @@ import (
 	"github.com/kenriortega/go-grpc-course/handOne/greet/greetpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
@@ -113,7 +114,13 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
+	creds, sslErr := credentials.NewServerTLSFromFile("./ssl/server.crt", "./ssl/server.pem")
+	if sslErr != nil {
+		log.Fatalf("Failed to parse credentials: %v", sslErr)
+		return
+	}
+	opts := grpc.Creds(creds)
+	s := grpc.NewServer(opts)
 	greetpb.RegisterGreetServiceServer(s, &server{})
 
 	if err := s.Serve(lis); err != nil {

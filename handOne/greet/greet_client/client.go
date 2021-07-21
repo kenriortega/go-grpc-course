@@ -10,21 +10,26 @@ import (
 	"github.com/kenriortega/go-grpc-course/handOne/greet/greetpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
 func main() {
 	fmt.Println("Hello from client")
-
-	cc, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	creds, sslErr := credentials.NewClientTLSFromFile("./ssl/ca.crt", "")
+	if sslErr != nil {
+		log.Fatalf("Failed to parse credentials: %v", sslErr)
+		return
+	}
+	cc, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
 	}
 	defer cc.Close()
 
 	c := greetpb.NewGreetServiceClient(cc)
-	// doUnary(c)
-	doUnaryWhithDeadline(c)
+	doUnary(c)
+	// doUnaryWhithDeadline(c)
 	// doServerStreaming(c)
 	// doClientStreaming(c)
 	// doBiDiStreaming(c)

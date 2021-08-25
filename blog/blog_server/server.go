@@ -13,7 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -26,6 +28,41 @@ var (
 )
 
 type server struct{}
+
+func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*blogpb.CreateBlogResponse, error) {
+	blog := req.GetBlog()
+	data := blogItem{
+		ID:       primitive.NewObjectID(),
+		AuthorID: blog.GetAuthorId(),
+		Content:  blog.GetContent(),
+		Title:    blog.GetTitle(),
+	}
+	result, err := collection.InsertOne(context.Background(), data)
+	if err != nil {
+		log.Fatal(err)
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal error: %v", err),
+		)
+	}
+
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot convert oid error: %v", err),
+		)
+	}
+
+	return &blogpb.CreateBlogResponse{
+		Blog: &blogpb.Blog{
+			Id:       oid.Hex(),
+			AuthorId: blog.GetAuthorId(),
+			Title:    blog.GetTitle(),
+			Content:  blog.GetContent(),
+		},
+	}, nil
+}
 
 // DTO
 

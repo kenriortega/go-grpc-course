@@ -134,6 +134,42 @@ func (*server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) (*
 
 }
 
+func (*server) ListBlog(req *blogpb.ListBlogRequest, stream blogpb.BlogService_ListBlogServer) error {
+	filter := bson.D{{}}
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("error: %v", err),
+		)
+	}
+	defer cursor.Close(context.Background())
+
+	for cursor.Next(context.Background()) {
+		data := &blogItem{}
+		err := cursor.Decode(data)
+		if err != nil {
+			return status.Errorf(
+				codes.Internal,
+				fmt.Sprintf("error: %v", err),
+			)
+		}
+		stream.Send(&blogpb.ListBlogResponse{Blog: &blogpb.Blog{
+			Id:       data.ID.Hex(),
+			AuthorId: data.AuthorID,
+			Title:    data.Title,
+			Content:  data.Content,
+		}})
+	}
+	if err := cursor.Err(); err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("error: %v", err),
+		)
+	}
+	return nil
+}
+
 // DTO
 
 type blogItem struct {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/kenriortega/go-grpc-course/blog/blogpb"
@@ -24,13 +25,16 @@ func main() {
 
 	c := blogpb.NewBlogServiceClient(cc)
 	fmt.Println("Create new Blog")
-	createBlog(c)
+	// createBlog(c)
 	fmt.Println("Read Blog")
 	// Read Blog by ID
-	readBlog(c)
+	// readBlog(c)
 	fmt.Println("Update Blog")
 	// update blog
-	updateBlog(c)
+	// updateBlog(c)
+
+	listStreamBlog(c)
+
 }
 
 func createBlog(c blogpb.BlogServiceClient) {
@@ -77,4 +81,22 @@ func updateBlog(c blogpb.BlogServiceClient) {
 		log.Fatalf("Error: %v", err)
 	}
 	fmt.Println(res.Blog)
+}
+func listStreamBlog(c blogpb.BlogServiceClient) {
+
+	stream, err := c.ListBlog(context.Background(), &blogpb.ListBlogRequest{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(res.GetBlog())
+	}
 }

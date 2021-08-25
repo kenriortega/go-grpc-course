@@ -9,6 +9,7 @@ import (
 	"os/signal"
 
 	"github.com/kenriortega/go-grpc-course/blog/blogpb"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -62,6 +63,75 @@ func (*server) CreateBlog(ctx context.Context, req *blogpb.CreateBlogRequest) (*
 			Content:  blog.GetContent(),
 		},
 	}, nil
+}
+
+func (*server) ReadBlog(ctx context.Context, req *blogpb.ReadBlogRequest) (*blogpb.ReadBlogResponse, error) {
+	blogIdHex := req.GetBlogId()
+	data := &blogItem{}
+	blogIdFromHex, err := primitive.ObjectIDFromHex(blogIdHex)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot convert blogid error: %v", err),
+		)
+	}
+
+	filter := bson.D{primitive.E{Key: "_id", Value: blogIdFromHex}}
+	err = collection.FindOne(context.TODO(), filter).Decode(&data)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.NotFound,
+			fmt.Sprintf("Cannot find blog by OID error: %v", err),
+		)
+	}
+
+	return &blogpb.ReadBlogResponse{
+		Blog: &blogpb.Blog{
+			Id:       data.ID.Hex(),
+			AuthorId: data.AuthorID,
+			Title:    data.Title,
+			Content:  data.Content,
+		},
+	}, nil
+}
+
+func (*server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) (*blogpb.UpdateBlogResponse, error) {
+	blog := req.GetBlog()
+	blogIdFromHex, err := primitive.ObjectIDFromHex(blog.GetId())
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot convert blogid error: %v", err),
+		)
+	}
+	filter := bson.D{primitive.E{Key: "_id", Value: blogIdFromHex}}
+	updater := bson.D{primitive.E{Key: "$set", Value: bson.D{
+		primitive.E{Key: "title", Value: blog.GetTitle()},
+	}}}
+	result, err := collection.UpdateOne(context.TODO(), filter, updater)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot find blog by OID error: %v", err),
+		)
+	}
+	if result.ModifiedCount == 1 {
+
+		return &blogpb.UpdateBlogResponse{
+			Blog: &blogpb.Blog{
+				Id:       blog.GetId(),
+				AuthorId: blog.GetAuthorId(),
+				Title:    blog.GetTitle(),
+				Content:  blog.GetContent(),
+			},
+		}, nil
+	} else {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot update blog by OID error: %v", blog),
+		)
+	}
+
 }
 
 // DTO

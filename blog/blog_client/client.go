@@ -23,7 +23,14 @@ func main() {
 	defer cc.Close()
 
 	c := blogpb.NewBlogServiceClient(cc)
+	fmt.Println("Create new Blog")
 	createBlog(c)
+	fmt.Println("Read Blog")
+	// Read Blog by ID
+	readBlog(c)
+	fmt.Println("Update Blog")
+	// update blog
+	updateBlog(c)
 }
 
 func createBlog(c blogpb.BlogServiceClient) {
@@ -40,4 +47,34 @@ func createBlog(c blogpb.BlogServiceClient) {
 		log.Fatalf("Error: %v", err)
 	}
 	fmt.Println(res.Blog.Id)
+}
+
+func readBlog(c blogpb.BlogServiceClient) {
+	blogId := "612667705c5c154d44f5560b"
+	res, err := c.ReadBlog(context.Background(), &blogpb.ReadBlogRequest{
+		BlogId: blogId,
+	})
+
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	fmt.Println(res.Blog)
+}
+
+func updateBlog(c blogpb.BlogServiceClient) {
+	blogId := "612667705c5c154d44f5560b"
+	blog := &blogpb.Blog{
+		Id:       blogId,
+		AuthorId: "SAs",
+		Title:    "Update title",
+		Content:  "QSd dfe dfdf e",
+	}
+	res, err := c.UpdateBlog(context.Background(), &blogpb.UpdateBlogRequest{
+		Blog: blog,
+	})
+
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	fmt.Println(res.Blog)
 }

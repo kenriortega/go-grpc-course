@@ -8,7 +8,7 @@ import (
 	"math"
 	"net"
 
-	"github.com/kenriortega/go-grpc-course/handOne/calculator/calculatorpb"
+	"github.com/kenriortega/go-grpc-course/calculator/calculatorpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
